@@ -16,6 +16,14 @@ namespace UserrrrrSon.Models.Edit
         public string ExpectedDate { get; set; }
         public string Visible { get; set; }
 
+        public bool ExistingClient { get; set; }
+
+        public string Source { get; set; }
+
+        public string Service { get; set; }
+
+        public bool Priority { get; set; }
+
         public List<phone_work_edit> PhoneNumbers { get; set; }
         public List<email_work_edit> Emails { get; set; }
 

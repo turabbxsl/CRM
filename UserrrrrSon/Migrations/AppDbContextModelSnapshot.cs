@@ -234,6 +234,21 @@ namespace UserrrrrSon.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Bank", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Banks");
+                });
+
             modelBuilder.Entity("UserrrrrSon.Models.models_.Branch", b =>
                 {
                     b.Property<int>("BranchId")
@@ -241,12 +256,18 @@ namespace UserrrrrSon.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("AccountName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("AccountNo")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BankName")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("BankId")
+                        .HasColumnType("int");
 
                     b.Property<string>("BranchCode")
                         .IsRequired()
@@ -281,7 +302,35 @@ namespace UserrrrrSon.Migrations
 
                     b.HasKey("BranchId");
 
+                    b.HasIndex("BankId");
+
                     b.ToTable("Branches");
+                });
+
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Calc", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("Calcs");
                 });
 
             modelBuilder.Entity("UserrrrrSon.Models.models_.Email", b =>
@@ -307,6 +356,43 @@ namespace UserrrrrSon.Migrations
                     b.HasIndex("WorkId");
 
                     b.ToTable("Emails");
+                });
+
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Invoice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BankId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BillTo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Date")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("ReferenceNumber")
+                        .HasColumnType("bigint");
+
+                    b.Property<float>("Total")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankId");
+
+                    b.HasIndex("BranchId");
+
+                    b.ToTable("Invoices");
                 });
 
             modelBuilder.Entity("UserrrrrSon.Models.models_.Person", b =>
@@ -343,6 +429,9 @@ namespace UserrrrrSon.Migrations
                     b.Property<string>("Source")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
@@ -355,6 +444,8 @@ namespace UserrrrrSon.Migrations
                     b.HasKey("PersonId");
 
                     b.HasIndex("ServiceId");
+
+                    b.HasIndex("StatusId");
 
                     b.ToTable("Persons");
                 });
@@ -397,6 +488,21 @@ namespace UserrrrrSon.Migrations
                     b.HasKey("ServiceId");
 
                     b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Status", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("UserrrrrSon.Models.models_.UserProfile", b =>
@@ -503,6 +609,28 @@ namespace UserrrrrSon.Migrations
                     b.Navigation("UserProfile");
                 });
 
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Branch", b =>
+                {
+                    b.HasOne("UserrrrrSon.Models.models_.Bank", "Bank")
+                        .WithMany("Branches")
+                        .HasForeignKey("BankId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bank");
+                });
+
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Calc", b =>
+                {
+                    b.HasOne("UserrrrrSon.Models.models_.Invoice", "Invoice")
+                        .WithMany("Calc")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
             modelBuilder.Entity("UserrrrrSon.Models.models_.Email", b =>
                 {
                     b.HasOne("UserrrrrSon.Models.models_.Person", "Person")
@@ -522,6 +650,21 @@ namespace UserrrrrSon.Migrations
                     b.Navigation("Work");
                 });
 
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Invoice", b =>
+                {
+                    b.HasOne("UserrrrrSon.Models.models_.Bank", "Bank")
+                        .WithMany("Invoices")
+                        .HasForeignKey("BankId");
+
+                    b.HasOne("UserrrrrSon.Models.models_.Branch", "Branch")
+                        .WithMany("Invoices")
+                        .HasForeignKey("BranchId");
+
+                    b.Navigation("Bank");
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("UserrrrrSon.Models.models_.Person", b =>
                 {
                     b.HasOne("UserrrrrSon.Models.models_.Service", "Service")
@@ -530,7 +673,15 @@ namespace UserrrrrSon.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("UserrrrrSon.Models.models_.Status", "Status")
+                        .WithMany("Persons")
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Service");
+
+                    b.Navigation("Status");
                 });
 
             modelBuilder.Entity("UserrrrrSon.Models.models_.Phone", b =>
@@ -552,9 +703,23 @@ namespace UserrrrrSon.Migrations
                     b.Navigation("Work");
                 });
 
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Bank", b =>
+                {
+                    b.Navigation("Branches");
+
+                    b.Navigation("Invoices");
+                });
+
             modelBuilder.Entity("UserrrrrSon.Models.models_.Branch", b =>
                 {
                     b.Navigation("AppUsers");
+
+                    b.Navigation("Invoices");
+                });
+
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Invoice", b =>
+                {
+                    b.Navigation("Calc");
                 });
 
             modelBuilder.Entity("UserrrrrSon.Models.models_.Person", b =>
@@ -563,6 +728,11 @@ namespace UserrrrrSon.Migrations
                 });
 
             modelBuilder.Entity("UserrrrrSon.Models.models_.Service", b =>
+                {
+                    b.Navigation("Persons");
+                });
+
+            modelBuilder.Entity("UserrrrrSon.Models.models_.Status", b =>
                 {
                     b.Navigation("Persons");
                 });

@@ -17,7 +17,6 @@ namespace UserrrrrSon.Models.Context
 
         }
 
-
         public DbSet<Branch> Branches { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Person> Persons { get; set; }
@@ -25,5 +24,10 @@ namespace UserrrrrSon.Models.Context
         public DbSet<Email> Emails { get; set; }
         public DbSet<Work> Works { get; set; }
         public DbSet<Service> Services { get; set; }
+        public DbSet<Status> Statuses { get; set; }
+        public DbSet<Bank> Banks { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Calc> Calcs { get; set; }
+
     }
 }

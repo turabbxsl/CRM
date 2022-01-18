@@ -33,6 +33,9 @@ namespace UserrrrrSon.Models.models_
         public int ServiceId { get; set; }
         public Service Service { get; set; }
 
+        public int StatusId { get; set; }
+        public Status Status { get; set; }
+
         public bool Priority { get; set; }
 
         public List<Phone> Phones { get; set; }

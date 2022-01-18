@@ -20,6 +20,7 @@ namespace UserrrrrSon.Models.DTO
             CreateMap<UserProfile, UserProfileDTO>().ReverseMap();
             CreateMap<UserProfile, UserEditProfileDTO>().ReverseMap();
             CreateMap<Person, PersonDTO>().ReverseMap();
+            CreateMap<Service, ServiceDTO>().ReverseMap();
         }
 
     }

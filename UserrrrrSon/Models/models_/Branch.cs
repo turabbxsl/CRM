@@ -36,7 +36,14 @@ namespace UserrrrrSon.Models.models_
         public string PhoneNumber { get; set; }
         public string Telephone { get; set; }
 
-        public string BankName { get; set; }
+        public string AccountName { get; set; }
+        public long AccountNo { get; set; }
+
+        public int BankId { get; set; }
+        public Bank Bank { get; set; }
+
+
+        public List<Invoice> Invoices { get; set; }
 
         public List<AppUser> AppUsers { get; set; }
 

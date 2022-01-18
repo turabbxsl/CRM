@@ -11,6 +11,7 @@ using UserrrrrSon.Models.DTO2;
 using UserrrrrSon.Models.Edit;
 using UserrrrrSon.Models.Get;
 using UserrrrrSon.Models.models_;
+using UserrrrrSon.Models.Test;
 
 namespace UserrrrrSon.Controllers
 {
@@ -39,7 +40,7 @@ namespace UserrrrrSon.Controllers
         [Route("[action]")]
         public async Task<ActionResult> GetAllPerson()
         {
-            var persons = _context.Persons.Select(s => new PersonGet
+            var persons = _context.Persons.Select(s => new PersonStatusGet
             {
                 ID = s.PersonId,
                 Name = s.Name,
@@ -50,6 +51,11 @@ namespace UserrrrrSon.Controllers
                 Visible = s.Visible,
                 Pipeline = s.Pipeline,
                 ReferenceNumber = s.ReferenceNumber,
+                ExistingClient = s.ExistingClient,
+                Source = s.Source,
+                Service = s.Service.Name,
+                Priority = s.Priority,
+                Status = _context.Statuses.FirstOrDefault(x => x.Id == s.StatusId).Name,
                 Phones = _context.Phones.Where(p => p.PersonId == s.PersonId).Select(c => new ph
                 {
                     Number = c.PhoneNumber,
@@ -80,7 +86,7 @@ namespace UserrrrrSon.Controllers
         {
 
             var person = _context.Persons.Where(x => x.PersonId == id)
-                                                   .Select(s => new PersonGet
+                                                   .Select(s => new PersonStatusGet
                                                    {
                                                        ID = s.PersonId,
                                                        Name = s.Name,
@@ -91,6 +97,11 @@ namespace UserrrrrSon.Controllers
                                                        Visible = s.Visible,
                                                        Pipeline = s.Pipeline,
                                                        ReferenceNumber = s.ReferenceNumber,
+                                                       ExistingClient = s.ExistingClient,
+                                                       Source = s.Source,
+                                                       Service = s.Service.Name,
+                                                       Priority = s.Priority,
+                                                       Status = _context.Statuses.FirstOrDefault(x => x.Id == s.StatusId).Name,
                                                        Phones = _context.Phones.Where(p => p.PersonId == id).Select(c => new ph
                                                        {
                                                            Number = c.PhoneNumber,
@@ -210,6 +221,14 @@ namespace UserrrrrSon.Controllers
                         person.ServiceId = serviceDto.ServiceId;
                         person.Priority = dto.Priority;
 
+                        var status = await _context.Statuses.FirstOrDefaultAsync(x => x.Name == "Pending");
+
+                        if (status == null)
+                        {
+                            return BadRequest("Status Not Found");
+                        }
+
+                        person.StatusId = status.Id;
 
                         Random rnd = new Random();
                         int value = rnd.Next(10000, 100000);
@@ -233,6 +252,12 @@ namespace UserrrrrSon.Controllers
                             }
                             var id = work.WorkId;
 
+                            var phoneIs = await _context.Phones.FirstOrDefaultAsync(x => x.PhoneNumber == item.PhoneNumber);
+                            if (phoneIs != null)
+                            {
+                                return BadRequest("PhoneNumber is Exist");
+                            }
+
                             Phone phone = new Phone();
                             phone.PersonId = person.PersonId;
                             phone.PhoneNumber = item.PhoneNumber;
@@ -252,10 +277,19 @@ namespace UserrrrrSon.Controllers
                             }
                             var id = work.WorkId;
 
+                            var emailIs = await _context.Emails.FirstOrDefaultAsync(x => x.Emaill.ToUpper() == item.Email.ToUpper());
+                            if (emailIs != null)
+                            {
+                                return BadRequest("Email is Exist");
+                            }
+
                             Email email = new Email();
                             email.PersonId = person.PersonId;
                             email.Emaill = item.Email;
                             email.WorkId = id;
+
+                            EmailHelper emailHelper = new EmailHelper();
+                            bool emailResponse = emailHelper.SendPersonEmail(item.Email);
 
                             _context.Emails.Add(email);
                             await _context.SaveChangesAsync();
@@ -275,6 +309,77 @@ namespace UserrrrrSon.Controllers
         }
 
 
+        [HttpPut]
+        [Route("[action]")]
+        public async Task<ActionResult> UpdateStatus(int leadId, string statuss)
+        {
+
+            var lead = await _context.Persons.FirstOrDefaultAsync(x => x.PersonId == leadId);
+
+            if (lead == null)
+            {
+                return BadRequest("Lead Not found");
+            }
+
+            var status = await _context.Statuses.FirstOrDefaultAsync(x => x.Name.ToUpper() == statuss.ToUpper());
+
+            if (status == null)
+            {
+                return BadRequest("Status Not found");
+            }
+
+            lead.StatusId = status.Id;
+            await _context.SaveChangesAsync();
+
+            return Ok("Updated");
+        }
+
+
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<ActionResult> GetLeadsByStatus(string statusName)
+        {
+
+            var status = await _context.Statuses.FirstOrDefaultAsync(x => x.Name.ToUpper() == statusName.ToUpper());
+
+            if (status == null)
+            {
+                return BadRequest("Status Not found");
+            }
+
+            var persons = _context.Persons.Select(s => new PersonStatusGet
+            {
+                ID = s.PersonId,
+                Name = s.Name,
+                Organization = s.Organization,
+                Title = s.Title,
+                Value = s.Value,
+                ExpectedDate = s.ExpectedDate,
+                Visible = s.Visible,
+                Pipeline = s.Pipeline,
+                ReferenceNumber = s.ReferenceNumber,
+                ExistingClient = s.ExistingClient,
+                Source = s.Source,
+                Service = s.Service.Name,
+                Priority = s.Priority,
+                Status = status.Name,
+                Phones = _context.Phones.Where(p => p.PersonId == s.PersonId).Select(c => new ph
+                {
+                    Number = c.PhoneNumber,
+                    Work = c.Work.Name
+                }).ToList(),
+                Emails = _context.Emails.Where(p => p.PersonId == s.PersonId).Select(c => new em
+                {
+                    Email = c.Emaill,
+                    Work = c.Work.Name
+                }).ToList(),
+            });
+
+
+
+            return Ok(persons);
+
+        }
 
 
         /// <summary>
@@ -341,48 +446,66 @@ namespace UserrrrrSon.Controllers
                 }
             }
 
+            person.ExistingClient = dto.ExistingClient;
+            person.Source = dto.Source;
+            var serviceDto = await _context.Services.FirstOrDefaultAsync(x => x.Name.ToUpper() == dto.Service.ToUpper());
+            if (serviceDto == null)
+            {
+                return BadRequest("Service not found");
+            }
+            person.ServiceId = serviceDto.ServiceId;
+            person.Priority = dto.Priority;
+
+
             foreach (var item in dto.PhoneNumbers)
             {
-                var phone = await _context.Phones.FirstOrDefaultAsync(x => x.PhoneID == item.PhoneId && x.PersonId == personid);
-
-                if (phone == null)
+                if (item.PhoneId != 0 && item.PhoneNumber != "string" && item.Work != "string")
                 {
-                    return BadRequest("Phone not found");
+                    var phone = await _context.Phones.FirstOrDefaultAsync(x => x.PhoneID == item.PhoneId && x.PersonId == personid);
+
+                    if (phone == null)
+                    {
+                        return BadRequest("Phone not found");
+                    }
+
+                    phone.PhoneNumber = item.PhoneNumber;
+                    var work = _context.Works.FirstOrDefault(x => x.Name.ToUpper() == item.Work.ToUpper());
+                    if (work == null)
+                    {
+                        return BadRequest("Phone,Work not found");
+                    }
+                    var id = work.WorkId;
+
+                    phone.WorkId = id;
+
+                    await _context.SaveChangesAsync();
+
                 }
-
-                phone.PhoneNumber = item.PhoneNumber;
-                var work = _context.Works.FirstOrDefault(x => x.Name.ToUpper() == item.Work.ToUpper());
-                if (work == null)
-                {
-                    return BadRequest("Phone,Work not found");
-                }
-                var id = work.WorkId;
-
-                phone.WorkId = id;
-
-                await _context.SaveChangesAsync();
             }
 
             foreach (var item in dto.Emails)
             {
-                var email = await _context.Emails.FirstOrDefaultAsync(x => x.EmailID == item.EmailId && x.PersonId == personid);
-
-                if (email == null)
+                if (item.EmailId != 0 && item.Email != "user@example.com" && item.Work != "string")
                 {
-                    return BadRequest("Email not found");
+                    var email = await _context.Emails.FirstOrDefaultAsync(x => x.EmailID == item.EmailId && x.PersonId == personid);
+
+                    if (email == null)
+                    {
+                        return BadRequest("Email not found");
+                    }
+
+                    email.Emaill = item.Email;
+                    var work = _context.Works.FirstOrDefault(x => x.Name.ToUpper() == item.Work.ToUpper());
+                    if (work == null)
+                    {
+                        return BadRequest("Email,Work not found");
+                    }
+                    var id = work.WorkId;
+
+                    email.WorkId = id;
+
+                    await _context.SaveChangesAsync();
                 }
-
-                email.Emaill = item.Email;
-                var work = _context.Works.FirstOrDefault(x => x.Name.ToUpper() == item.Work.ToUpper());
-                if (work == null)
-                {
-                    return BadRequest("Email,Work not found");
-                }
-                var id = work.WorkId;
-
-                email.WorkId = id;
-
-                await _context.SaveChangesAsync();
             }
 
 

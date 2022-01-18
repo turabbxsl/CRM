@@ -19,6 +19,14 @@ namespace UserrrrrSon.Models.Get
         public string Visible { get; set; }
         public int ReferenceNumber { get; set; }
 
+        public bool ExistingClient { get; set; }
+
+        public string Source { get; set; }
+
+        public string Service { get; set; }
+
+        public bool Priority { get; set; }
+
         public List<ph> Phones { get; set; }
         public List<em> Emails { get; set; }
 

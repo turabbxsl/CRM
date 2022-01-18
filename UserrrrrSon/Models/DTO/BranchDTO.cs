@@ -34,7 +34,9 @@ namespace UserrrrrSon.Models.DTO
         public string PostalCode { get; set; }
         public string PhoneNumber { get; set; }
         public string Telephone { get; set; }
+        public string AccountName { get; set; }
 
+        public long AccountNo { get; set; }
         public string BankName { get; set; }
 
 

@@ -9,12 +9,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using UserrrrrSon.Models.Context;
 using UserrrrrSon.Models.DTO;
+using UserrrrrSon.Models.Get;
 using UserrrrrSon.Models.models_;
 
 namespace UserrrrrSon.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class BranchController : ControllerBase
     {
@@ -39,9 +39,27 @@ namespace UserrrrrSon.Controllers
         {
             if (_context.Branches.Count() > 0)
             {
-                return await _context.Branches.ToListAsync();
+                var branches = _context.Branches
+                                                  .Select(s => new BranchGet
+                                                  {
+                                                      BranchName = s.BranchName,
+                                                      BranchCode = s.BranchCode,
+                                                      BranchHead = s.BranchHead,
+                                                      Address = s.Address,
+                                                      Country = s.Country,
+                                                      State = s.State,
+                                                      City = s.City,
+                                                      PostalCode = s.PostalCode,
+                                                      PhoneNumber = s.PhoneNumber,
+                                                      Telephone = s.Telephone,
+                                                      BankName = _context.Banks.FirstOrDefault(x => x.Id == s.BankId).BankName,
+                                                      AccountName = s.AccountName,
+                                                      AccountNo = s.AccountNo
+                                                  });
+
+                return Ok(branches);
             }
-            return BadRequest();
+            return BadRequest("Branch is empty");
         }
 
 
@@ -54,13 +72,29 @@ namespace UserrrrrSon.Controllers
         [Route("[action]/{id}")]
         public async Task<ActionResult> GetBranchByID(int id)
         {
-            var branch = await _context.Branches.FirstOrDefaultAsync(x => x.BranchId == id);
+            var branch = _context.Branches.Where(x => x.BranchId == id)
+                                                   .Select(s => new BranchGet
+                                                   {
+                                                       BranchName = s.BranchName,
+                                                       BranchCode = s.BranchCode,
+                                                       BranchHead = s.BranchHead,
+                                                       Address = s.Address,
+                                                       Country = s.Country,
+                                                       State = s.State,
+                                                       City = s.City,
+                                                       PostalCode = s.PostalCode,
+                                                       PhoneNumber = s.PhoneNumber,
+                                                       Telephone = s.Telephone,
+                                                       BankName = _context.Banks.FirstOrDefault(x => x.Id == s.BankId).BankName,
+                                                       AccountName = s.AccountName,
+                                                       AccountNo = s.AccountNo
+                                                   });
 
             if (branch != null)
             {
                 return Ok(branch);
             }
-            return BadRequest();
+            return BadRequest("Branch not found");
         }
 
 
@@ -75,13 +109,29 @@ namespace UserrrrrSon.Controllers
         [Route("[action]/{name}")]
         public async Task<ActionResult> GetBranchByName(string name)
         {
-            var branch = await _context.Branches.FirstOrDefaultAsync(x => x.BranchName == name);
+            var branch = _context.Branches.Where(x => x.BranchName.ToUpper() == name.ToUpper())
+                                                   .Select(s => new BranchGet
+                                                   {
+                                                       BranchName = s.BranchName,
+                                                       BranchCode = s.BranchCode,
+                                                       BranchHead = s.BranchHead,
+                                                       Address = s.Address,
+                                                       Country = s.Country,
+                                                       State = s.State,
+                                                       City = s.City,
+                                                       PostalCode = s.PostalCode,
+                                                       PhoneNumber = s.PhoneNumber,
+                                                       Telephone = s.Telephone,
+                                                       BankName = _context.Banks.FirstOrDefault(x => x.Id == s.BankId).BankName,
+                                                       AccountName = s.AccountName,
+                                                       AccountNo = s.AccountNo
+                                                   });
 
             if (branch != null)
             {
                 return Ok(branch);
             }
-            return BadRequest();
+            return BadRequest("Branch not found");
         }
 
 
@@ -103,7 +153,25 @@ namespace UserrrrrSon.Controllers
                     if (dto != null)
                     {
                         var branch = _mapper.Map<Branch>(dto);
+
+                        var bank = await _context.Banks.FirstOrDefaultAsync(x => x.BankName.ToUpper() == dto.BankName.ToUpper());
+                        branch.BankId = bank.Id;
+
+                        if (branch.BankId == 0)
+                        {
+                            return BadRequest("Bank not found");
+                        }
+
+                        var iss = await _context.Branches.Where(x => x.AccountNo == dto.AccountNo).ToListAsync();
+                        if (iss.Count > 0)
+                        {
+                            return BadRequest("Account No is Exist");
+                        }
+                     
                         _context.Branches.Add(branch);
+
+
+
                         await _context.SaveChangesAsync();
                         return Ok(branch);
                     }
@@ -127,7 +195,7 @@ namespace UserrrrrSon.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("[action]/{id}")]
-        public async Task<ActionResult<BranchDTO>> update(int id, [FromBody] BranchDTO dto)
+        public async Task<ActionResult<BranchDTO>> Update(int id, [FromBody] BranchDTO dto)
         {
             try
             {
@@ -205,9 +273,28 @@ namespace UserrrrrSon.Controllers
                 {
                     if (dto.BankName != "string")
                     {
-                        branch.BankName = dto.BankName;
+                        var bank = await _context.Banks.FirstOrDefaultAsync(x => x.BankName.ToUpper() == dto.BankName.ToUpper());
+                        branch.BankId = bank.Id;
                     }
                 }
+
+                if (dto.AccountName != null)
+                {
+                    if (dto.AccountName != "string")
+                    {
+                        branch.AccountName = dto.AccountName;
+                    }
+                }
+
+                Random rnd = new Random();
+                long value = rnd.Next(100000000, 1000000000);
+                var list = _context.Branches.Select(x => x.AccountNo).ToList();
+                if (list.Contains(value))
+                {
+                    value = rnd.Next(100000000, 1000000000);
+                }
+                branch.AccountNo = value;
+
                 if (dto.Country != null)
                 {
                     if (dto.Country != "string")
